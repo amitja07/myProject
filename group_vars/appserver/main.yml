@@ -1,0 +1,7 @@
+software_dir: '/Users/amitaj/Documents/Softwares'
+jdk_installation_archive: 'jdk-8u181-linux-x64.tar'
+staging_directory: '/home/oracle/staging'
+oracle_base: '/home/oracle/fmw'
+oracle_user: 'oracle'
+oracle_group: 'oracle'
+jdk_folder: '{{ oracle_base }}/jdk1.8.0_181'
