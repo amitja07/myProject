@@ -3,19 +3,49 @@
 ## ==> author: Amit Jain
 #################################################################################
 
+- name: Create Staging Directory
+  file:
+    path: "{{ staging_directory }}"
+    state: directory
+    owner: oracle
+    group: oracle
+    mode: 0755
+
+- name: Create Directory Structure
+  file:
+    path: "{{ oracle_base }}"
+    state: directory
+    owner: oracle
+    group: oracle
+    mode: 0755
+
+- name: Check if staging Directory Exists
+  stat: path={{ staging_directory }}
+  register: stagingdir
+
 - name: Copy jdk Archive to Host
   copy: src={{ software_dir }}/{{ jdk_installation_archive }} dest={{ staging_directory }}/{{jdk_installation_archive }}
+  when: stagingdir.stat.exists
 
 - name: Extract JDK Archive
   command: 'tar -xf {{ staging_directory }}/{{ jdk_installation_archive }} -C {{ oracle_base }}'
   args:
     creates: "{{ jdk_folder }}"
 
+- name: Check if jdk dir exists
+  stat: path="{{ jdk_folder }}"
+  register: jdkdir
+
 - name: Change ownership of jdk folder
   file: path="{{ jdk_folder }}" owner={{ oracle_user }} group={{ oracle_group }} recurse=yes
 - name: Change entropy device for java
   command: "sed -i.bak 's/\\/dev\\/random/\\/dev\\/.\\/urandom/' {{ jdk_folder }}/jre/lib/security/java.security"
+
+- name: Create Symlink
+  file: src={{ jdk_folder }} dest={{ oracle_base }}/jdk state=link
+  when: jdkdir.stat.exists
+
 - name: Add JAVA_HOME environment variariables in bashrc
-  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export JAVA_HOME={{ jdk_folder }}'
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export JAVA_HOME={{ oracle_base }}/jdk'
 - name: Add Java bin folder to path in bashrc
   lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export PATH=$JAVA_HOME/bin:$PATH'
